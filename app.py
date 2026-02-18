@@ -104,46 +104,52 @@ def process_single_file(uploaded_file):
 # ------------------------------------------------
 # Upload Section
 # ------------------------------------------------
-
 uploaded_files = st.file_uploader(
     "Upload Excel Files",
     type=["xlsx"],
     accept_multiple_files=True
 )
 
+if "final_df" not in st.session_state:
+    st.session_state.final_df = None
+
 if uploaded_files:
 
-    total_files = len(uploaded_files)
+    if st.button("Process Files"):
 
-    progress_bar = st.progress(0)
-    status_text = st.empty()
+        total_files = len(uploaded_files)
+        progress_bar = st.progress(0)
+        status_text = st.empty()
 
-    results = []
-    
-    with st.spinner("Processing files..."):
+        results = []
 
-        for idx, uploaded_file in enumerate(uploaded_files):
+        with st.spinner("Processing files..."):
 
-            result = process_single_file(uploaded_file)
-            results.append(result)
+            for idx, uploaded_file in enumerate(uploaded_files):
 
-            # Update progress
-            progress = (idx + 1) / total_files
-            progress_bar.progress(progress)
+                result = process_single_file(uploaded_file)
+                results.append(result)
 
-            status_text.text(f"Processing file {idx + 1} of {total_files}")
+                progress = (idx + 1) / total_files
+                progress_bar.progress(progress)
 
-    final_df = pd.DataFrame(results)
+                status_text.text(f"Processing file {idx + 1} of {total_files}")
 
-    progress_bar.empty()
-    status_text.empty()
+        st.session_state.final_df = pd.DataFrame(results)
 
-    st.success("Processing completed successfully ✅")
+        progress_bar.empty()
+        status_text.empty()
+
+        st.success("Processing completed successfully ✅")
+# ------------------------------------------
+# Display Results If Already Processed
+# ------------------------------------------
+if st.session_state.final_df is not None:
 
     st.subheader("Preview")
-    st.dataframe(final_df, use_container_width=True)
+    st.dataframe(st.session_state.final_df, use_container_width=True)
 
-    csv_data = final_df.to_csv(index=False).encode("utf-8")
+    csv_data = st.session_state.final_df.to_csv(index=False).encode("utf-8")
 
     st.download_button(
         label="Download Result CSV",
@@ -153,8 +159,7 @@ if uploaded_files:
     )
 
 else:
-    st.warning("Upload Excel files to get started.")
-
+    st.warning("Upload Excel files and click 'Process Files' to begin.")
 # ------------------------------------------------
 # Footer
 # ------------------------------------------------
